@@ -2,6 +2,7 @@ package com.bobocode.lambdas.tutorial;
 
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
@@ -29,9 +30,17 @@ public class MethodReferenceExamples {
     }
 
     private static void printUpperStringUsingMethodReference(String s) {
+        // non-static: refers to toUpperCase method of this
+        // string as parameter
         UnaryOperator<String> upperOperation = String::toUpperCase;
-
         System.out.println("\n" + s + " -> " + upperOperation.apply(s));
+
+
+        String hello = "hello";
+        //object: refers to the toUpperCase method of the string hello
+        Supplier<String> upperHelloSupplier = hello::toUpperCase;
+        System.out.println(upperHelloSupplier.get());
+
     }
 
 }
