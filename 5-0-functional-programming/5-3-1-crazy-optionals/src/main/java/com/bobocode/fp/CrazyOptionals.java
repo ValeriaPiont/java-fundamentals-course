@@ -12,18 +12,12 @@ import com.bobocode.util.ExerciseNotCompletedException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalDouble;
+import java.util.*;
 
 /**
  * {@link CrazyOptionals} is an exercise class. Each method represents some operation with a {@link Account} and
  * should be implemented using Optional API. Every method that is not implemented yet throws
  * {@link ExerciseNotCompletedException}.
- * <p>
- * TODO: remove exception and implement each method of this class using Optional API
- * <p><p>
- * <strong>TODO: to get the most out of your learning, <a href="https://www.bobocode.com/learn">visit our website</a></strong>
  * <p>
  *
  * @author Taras Boychuk
@@ -37,7 +31,7 @@ public class CrazyOptionals {
      * @return optional object that holds text
      */
     public static Optional<String> optionalOfString(@Nullable String text) {
-        throw new ExerciseNotCompletedException();
+        return Optional.ofNullable(text);
     }
 
     /**
@@ -47,7 +41,8 @@ public class CrazyOptionals {
      * @param amount          money to deposit
      */
     public static void deposit(AccountProvider accountProvider, BigDecimal amount) {
-        throw new ExerciseNotCompletedException();
+        accountProvider.getAccount()
+                .ifPresent(account -> account.setBalance(account.getBalance().add(amount)));
     }
 
     /**
@@ -57,7 +52,7 @@ public class CrazyOptionals {
      * @return optional object that holds account
      */
     public static Optional<Account> optionalOfAccount(@Nonnull Account account) {
-        throw new ExerciseNotCompletedException();
+        return Optional.of(account);
     }
 
     /**
@@ -69,7 +64,7 @@ public class CrazyOptionals {
      * @return account from provider or defaultAccount
      */
     public static Account getAccount(AccountProvider accountProvider, Account defaultAccount) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount().orElse(defaultAccount);
     }
 
     /**
@@ -80,7 +75,8 @@ public class CrazyOptionals {
      * @param accountService
      */
     public static void processAccount(AccountProvider accountProvider, AccountService accountService) {
-        throw new ExerciseNotCompletedException();
+        accountProvider.getAccount()
+                .ifPresentOrElse(account -> accountService.processAccount(account), () -> accountService.processWithNoAccount());
     }
 
     /**
@@ -91,7 +87,7 @@ public class CrazyOptionals {
      * @return provided or generated account
      */
     public static Account getOrGenerateAccount(AccountProvider accountProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount().orElseGet(Accounts::generateAccount);
     }
 
     /**
@@ -101,7 +97,7 @@ public class CrazyOptionals {
      * @return optional balance
      */
     public static Optional<BigDecimal> retrieveBalance(AccountProvider accountProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount().map(Account::getBalance);
     }
 
     /**
@@ -112,7 +108,8 @@ public class CrazyOptionals {
      * @return provided account
      */
     public static Account getAccount(AccountProvider accountProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount()
+                .orElseThrow(() -> new AccountNotFoundException("No Account provided!"));
     }
 
     /**
@@ -122,7 +119,7 @@ public class CrazyOptionals {
      * @return optional credit balance
      */
     public static Optional<BigDecimal> retrieveCreditBalance(CreditAccountProvider accountProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount().flatMap(CreditAccount::getCreditBalance);
     }
 
 
@@ -134,7 +131,12 @@ public class CrazyOptionals {
      * @return optional gmail account
      */
     public static Optional<Account> retrieveAccountGmail(AccountProvider accountProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount()
+                .filter(account -> "gmail".equals(getDomain(account.getEmail())));
+    }
+
+    private static String getDomain(String email) {
+        return email.split("@")[1];
     }
 
     /**
@@ -147,7 +149,9 @@ public class CrazyOptionals {
      * @return account got from either accountProvider or fallbackProvider
      */
     public static Account getAccountWithFallback(AccountProvider accountProvider, AccountProvider fallbackProvider) {
-        throw new ExerciseNotCompletedException();
+        return accountProvider.getAccount()
+                .or(fallbackProvider::getAccount)
+                .orElseThrow(NoSuchElementException::new);
     }
 
     /**
@@ -158,7 +162,9 @@ public class CrazyOptionals {
      * @return account with the highest balance
      */
     public static Account getAccountWithMaxBalance(List<Account> accounts) {
-        throw new ExerciseNotCompletedException();
+        return accounts.stream()
+                .max(Comparator.comparing(Account::getBalance))
+                .orElseThrow(NoSuchElementException::new);
     }
 
     /**
@@ -168,7 +174,7 @@ public class CrazyOptionals {
      * @return the lowest balance values
      */
     public static OptionalDouble findMinBalanceValue(List<Account> accounts) {
-        throw new ExerciseNotCompletedException();
+        return accounts.stream().map(Account::getBalance).mapToDouble(balance -> balance.doubleValue()).min();
     }
 
     /**
@@ -178,7 +184,9 @@ public class CrazyOptionals {
      * @param accountService
      */
     public static void processAccountWithMaxBalance(List<Account> accounts, AccountService accountService) {
-        throw new ExerciseNotCompletedException();
+        accounts.stream()
+                .max(Comparator.comparing(Account::getBalance))
+                .ifPresent(accountService::processAccount);
     }
 
     /**
@@ -188,7 +196,19 @@ public class CrazyOptionals {
      * @return total credit balance
      */
     public static double calculateTotalCreditBalance(List<CreditAccount> accounts) {
-        throw new ExerciseNotCompletedException();
+        return accounts.stream()
+                .map(CreditAccount::getCreditBalance)
+                .filter(balance -> balance.isPresent())
+                .map(balance -> balance.get())
+                .reduce(BigDecimal.ZERO, (subSum, balance) -> subSum.add(balance))
+                .doubleValue();
+        // variant with flatMap
+//        return accounts.stream()
+//                .map(CreditAccount::getCreditBalance)
+//                .flatMap(bigDecimal -> bigDecimal.stream())
+//                .mapToDouble(balance -> balance.doubleValue())
+//                .sum();
     }
+
 }
 
